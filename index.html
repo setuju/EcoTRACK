@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrack · Carbon Footprint Calculator</title>
+    <meta name="description" content="Understand and reduce your carbon footprint. Built for DEV Weekend Challenge: Earth Day Edition.">
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Cookie Consent Banner -->
+    <div id="cookieConsent" class="cookie-banner" style="display: none;">
+        <div class="cookie-content">
+            <i class="fa-solid fa-cookie-bite"></i>
+            <p>We use a device identifier to save your footprint data and improve your experience. No personal data is collected.</p>
+            <div class="cookie-actions">
+                <button id="acceptCookies" class="btn-primary btn-small">Accept</button>
+                <button id="declineCookies" class="btn-secondary btn-small">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Modal -->
+    <div id="howItWorksModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2><i class="fa-solid fa-circle-info"></i> How EcoTrack Works</h2>
+            <p><strong>1. Enter your lifestyle data</strong> – Fill in the form with your weekly/monthly habits.</p>
+            <p><strong>2. Choose your country</strong> – Electricity emissions vary by location.</p>
+            <p><strong>3. Click "Calculate"</strong> – Get your annual carbon footprint and personalized recommendations.</p>
+            <p><strong>4. Save your results</strong> – Track progress over time (stored locally or anonymously in the cloud).</p>
+            <p><strong>Methodology:</strong> Emission factors from EPA, IPCC, and Poore & Nemecek (2018). Grid intensity from Electricity Maps.</p>
+        </div>
+    </div>
+
+    <div class="app">
+        <header class="header">
+            <div class="logo">
+                <i class="fa-solid fa-leaf"></i>
+                <h1>EcoTrack</h1>
+            </div>
+            <p class="tagline">Measure what matters. Reduce your impact.</p>
+            <button id="howItWorksBtn" class="btn-secondary btn-small" style="margin-top: 8px;">
+                <i class="fa-solid fa-circle-question"></i> How it works
+            </button>
+        </header>
+
+        <main>
+            <!-- Calculator Form -->
+            <form id="calcForm" class="card">
+                <h2><i class="fa-solid fa-sliders"></i> Your Lifestyle</h2>
+                
+                <!-- Transportation -->
+                <div class="section-title"><i class="fa-solid fa-car"></i> Transportation</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-car-side"></i> Car</label>
+                        <input type="number" id="carKm" min="0" value="100" step="10">
+                        <span class="unit">km / week</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-motorcycle"></i> Motorcycle</label>
+                        <input type="number" id="motorcycleKm" min="0" value="0" step="10">
+                        <span class="unit">km / week</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-bus"></i> Public transport</label>
+                        <input type="number" id="publicTransportKm" min="0" value="20" step="5">
+                        <span class="unit">km / week</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-plane"></i> Flights</label>
+                        <input type="number" id="flights" min="0" value="0" step="1">
+                        <span class="unit">hours / year</span>
+                    </div>
+                </div>
+
+                <!-- Home Energy -->
+                <div class="section-title"><i class="fa-solid fa-house-chimney"></i> Home Energy</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-bolt"></i> Electricity</label>
+                        <input type="number" id="electricity" min="0" value="150" step="10">
+                        <span class="unit">kWh / month</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-fire"></i> Natural gas / LPG</label>
+                        <input type="number" id="gas" min="0" value="0" step="1">
+                        <span class="unit">kg / month</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-water"></i> Water</label>
+                        <input type="number" id="water" min="0" value="10" step="1">
+                        <span class="unit">m³ / month</span>
+                    </div>
+                </div>
+
+                <!-- Food & Diet -->
+                <div class="section-title"><i class="fa-solid fa-utensils"></i> Food & Diet</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-drumstick-bite"></i> Red meat</label>
+                        <input type="number" id="meat" min="0" value="5" step="1">
+                        <span class="unit">servings / week</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-cheese"></i> Dairy products</label>
+                        <input type="number" id="dairy" min="0" value="7" step="1">
+                        <span class="unit">servings / week</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-tractor"></i> Local food</label>
+                        <input type="number" id="localFood" min="0" max="100" value="50" step="5">
+                        <span class="unit">% of diet</span>
+                    </div>
+                </div>
+
+                <!-- Waste & Recycling -->
+                <div class="section-title"><i class="fa-solid fa-recycle"></i> Waste & Recycling</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-trash"></i> General waste</label>
+                        <input type="number" id="waste" min="0" value="5" step="0.5">
+                        <span class="unit">kg / week</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-arrows-rotate"></i> Recycling rate</label>
+                        <input type="number" id="recycled" min="0" max="100" value="20" step="5">
+                        <span class="unit">%</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-bag-shopping"></i> Plastic bags</label>
+                        <input type="number" id="plasticBags" min="0" value="7" step="1">
+                        <span class="unit">bags / week</span>
+                    </div>
+                </div>
+
+                <!-- Lifestyle & Shopping -->
+                <div class="section-title"><i class="fa-solid fa-shirt"></i> Lifestyle & Shopping</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-tshirt"></i> New clothing</label>
+                        <input type="number" id="clothing" min="0" value="3" step="1">
+                        <span class="unit">items / month</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-laptop"></i> Electronics</label>
+                        <input type="number" id="electronics" min="0" value="1" step="1">
+                        <span class="unit">items / year</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-video"></i> Video streaming</label>
+                        <input type="number" id="streaming" min="0" value="2" step="0.5">
+                        <span class="unit">hours / day</span>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="section-title"><i class="fa-solid fa-location-dot"></i> Location</div>
+                <div class="form-group">
+                    <label>Country</label>
+                    <select id="country">
+                        <option value="ID">🇮🇩 Indonesia</option>
+                        <option value="US">🇺🇸 United States</option>
+                        <option value="GB">🇬🇧 United Kingdom</option>
+                        <option value="IN">🇮🇳 India</option>
+                        <option value="CN">🇨🇳 China</option>
+                        <option value="JP">🇯🇵 Japan</option>
+                        <option value="DE">🇩🇪 Germany</option>
+                        <option value="FR">🇫🇷 France</option>
+                        <option value="BR">🇧🇷 Brazil</option>
+                        <option value="AU">🇦🇺 Australia</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary btn-large">
+                    <i class="fa-solid fa-calculator"></i> Calculate Footprint
+                </button>
+            </form>
+
+            <!-- Results Panel -->
+            <div id="resultsPanel" class="card" style="display: none;">
+                <div class="result-header">
+                    <h2>Your Carbon Footprint</h2>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="toggleChartBtn" class="icon-btn" title="Toggle chart type">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </button>
+                        <button id="saveResultBtn" class="icon-btn" title="Save result">
+                            <i class="fa-solid fa-bookmark"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="total-box">
+                    <span class="total-value" id="totalCarbon">0</span>
+                    <span class="total-unit">kg CO₂e / year</span>
+                </div>
+
+                <div class="metrics">
+                    <div class="metric tooltip">
+                        <span>🌎 vs Global Avg <i class="fa-regular fa-circle-question"></i></span>
+                        <strong id="globalCompare">-</strong>
+                        <span class="tooltiptext">Global average carbon footprint per person is ~4,800 kg CO₂e/year. Lower is better!</span>
+                    </div>
+                    <div class="metric tooltip">
+                        <span>🎯 vs 2050 Target <i class="fa-regular fa-circle-question"></i></span>
+                        <strong id="targetCompare">-</strong>
+                        <span class="tooltiptext">To meet Paris Agreement goals, per capita emissions should be below 2,000 kg CO₂e/year by 2050.</span>
+                    </div>
+                    <div class="metric">
+                        <span>🌳 Trees to offset</span>
+                        <strong id="treeCount">0</strong>
+                    </div>
+                </div>
+
+                <!-- Interpretation text -->
+                <div id="interpretation" class="interpretation"></div>
+
+                <div class="chart-container">
+                    <canvas id="footprintChart"></canvas>
+                </div>
+
+                <div id="recommendations" class="recommendations"></div>
+
+                <!-- Share buttons -->
+                <div class="share-section">
+                    <p>Share your result:</p>
+                    <div class="share-buttons">
+                        <button class="share-btn" id="shareX"><i class="fa-brands fa-x-twitter"></i></button>
+                        <button class="share-btn" id="shareFacebook"><i class="fa-brands fa-facebook-f"></i></button>
+                        <button class="share-btn" id="shareLinkedIn"><i class="fa-brands fa-linkedin-in"></i></button>
+                        <button class="share-btn" id="shareCopy"><i class="fa-solid fa-link"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Panel -->
+            <div id="historyPanel" class="card" style="display: none;">
+                <div class="history-header">
+                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Your History</h2>
+                    <button id="clearHistoryBtn" class="btn-secondary btn-small">Clear</button>
+                </div>
+                <div id="historyList" class="history-list"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>
+                🌱 Built with <i class="fa-solid fa-heart" style="color: #4caf50;"></i> for 
+                <a href="https://dev.to/challenges/weekend-2026-04-16" target="_blank">DEV Weekend Challenge: Earth Day Edition</a> 
+                · <a href="https://github.com/setuju/ecotrack" target="_blank"><i class="fa-brands fa-github"></i> @setuju</a>
+            </p>
+            <div class="references">
+                <p>
+                    <strong>Scientific references:</strong> 
+                    <a href="#" class="ref-link" data-ref="electricity">Electricity Maps</a> · 
+                    <a href="#" class="ref-link" data-ref="epa">EPA</a> · 
+                    <a href="#" class="ref-link" data-ref="ipcc">IPCC</a> · 
+                    <a href="#" class="ref-link" data-ref="poore">Poore & Nemecek (2018)</a> · 
+                    <a href="#" class="ref-link" data-ref="warm">EPA WARM</a>
+                </p>
+                <p id="referenceDetail" style="font-size:0.8rem; margin-top:4px;"></p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
