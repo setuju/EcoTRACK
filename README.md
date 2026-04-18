@@ -24,7 +24,7 @@
     <a href="https://dev.to/challenges/weekend-2026-04-16"><strong>DEV Weekend Challenge: Earth Day Edition</strong></a>.
     <br />
     <br />
-    <a href="https://ecotrack-pro.vercel.app"><strong>✨ View Live Demo »</strong></a>
+    <a href="https://ecotrack-pro-theta.vercel.app/"><strong>✨ View Live Demo »</strong></a>
     ·
     <a href="https://github.com/setuju/ecotrack/issues">🐞 Report Bug</a>
     ·
@@ -202,6 +202,8 @@ Project Link: [EcoTRACK](https://github.com/setuju/ecotrack)
 
 DEV Community Post: [Read the story behind EcoTrack](https://dev.to/ggle_in)
 
+
+**Live Demo:** [ecotrack-pro.netlify.app](https://ecotrack-pro.netlify.app/)
 ---
 
 <div align="center">
